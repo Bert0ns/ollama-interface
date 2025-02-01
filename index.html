@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek AI Interface</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        #user-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #3d8e41;
+        }
+
+        #response {
+            margin-top: 20px;
+            padding: 15px;
+            border-left: 4px solid #e3e3e3;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>DeepSeek AI Chat</h1>
+    <label for="user-input"></label><input type="text" id="user-input" placeholder="Type your prompt...">
+    <button onclick="sendMessageToOllama()">Send</button>
+    <div id="response" style="display: block"></div>
+    <script defer>
+        async function sendMessageToOllama() {
+            const userInput = document.getElementById('user-input');
+            const responseDiv = document.getElementById('response');
+            console.log("in", userInput.value)
+            const message = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: 'deepseek-r1:32b', // Replace with your model name if needed
+                    prompt: userInput.value,
+                }),
+            };
+
+            try {
+                const response = await fetch('http://localhost:11434/api/generate', message); // Ollama's default port
+
+                if (!response.ok) {
+                    const errorBody = await response.text(); // Try to get error details
+                    console.error({res: response.status, err: errorBody});
+                    return;
+                }
+
+                // Handle chunked NDJSON stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8'); // Important: Decode the chunks
+
+                let partialData = ''; // Accumulate chunks
+                while (true) {
+                    const { done, value } = await reader.read();
+
+                    if (done) {
+                        break; // Stream finished
+                    }
+
+                    partialData += decoder.decode(value);
+
+                    // Process complete NDJSON lines
+                    const lines = partialData.split('\n');
+                    partialData = lines.pop(); // Keep the incomplete line for the next chunk
+
+                    for (const line of lines) {
+                        if (line.trim() !== '') { // Skip empty lines
+                            try {
+                                const jsonObject = JSON.parse(line);
+                                // Process each JSON object from the NDJSON stream
+                                console.log("Received NDJSON object:", jsonObject);
+
+                                if (jsonObject.response) {
+                                    responseDiv.innerText += jsonObject.response; // Append the text
+                                }
+
+                                if (jsonObject.done) {
+                                    console.log("Ollama generation complete.");
+                                }
+
+                            } catch (jsonError) {
+                                console.error("Error parsing JSON:", jsonError, line);
+                            }
+                        }
+                    }
+                }
+                responseDiv.innerHTML = marked.parse(responseDiv.innerText)
+            } catch (error) {
+                console.error('Error sending message to Ollama:', error);
+                // Handle error, e.g., display an error message to the user
+                responseDiv.innerText = "Error communicating with Ollama. Check the console for details.";
+            }
+        }
+
+        // Allow submitting by pressing Enter
+        document.getElementById('user-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessageToOllama();
+            }
+        });
+    </script>
+</div>
+</body>
+</html>
