@@ -83,7 +83,7 @@
                 const response = await fetch('http://localhost:11434/api/generate', message); // Ollama's default port
 
                 if (!response.ok) {
-                    const errorBody = await response.text(); // Try to get error details
+                    const errorBody = await response.text();
                     console.error({res: response.status, err: errorBody});
                     return;
                 }
@@ -112,11 +112,7 @@
                                 const jsonObject = JSON.parse(line);
                                 // Process each JSON object from the NDJSON stream
                                 console.log("Received NDJSON object:", jsonObject);
-
-                                if (jsonObject.response) {
-                                    responseDiv.innerText += jsonObject.response; // Append the text
-                                }
-
+                                responseDiv.innerText += jsonObject.response; // Append the text
                                 if (jsonObject.done) {
                                     console.log("Ollama generation complete.");
                                 }
