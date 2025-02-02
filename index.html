@@ -55,19 +55,127 @@
             border-left: 4px solid #e3e3e3;
             display: none;
         }
+
+        .hidden {
+            display: none;
+        }
+
+        /* From Uiverse.io by PriyanshuGupta28 */
+        .spinner {
+            position: absolute;
+            width: 5px;
+            height: 6px;
+        }
+
+        .spinner div {
+            position: absolute;
+            width: 50%;
+            height: 85%;
+            background: #555555;
+            transform: rotate(calc(var(--rotation) * 1deg)) translate(0, calc(var(--translation) * 1%));
+            animation: spinner-fzua35 1s calc(var(--delay) * 1s) infinite ease;
+        }
+
+        .spinner div:nth-child(1) {
+            --delay: 0.1;
+            --rotation: 36;
+            --translation: 150;
+        }
+
+        .spinner div:nth-child(2) {
+            --delay: 0.2;
+            --rotation: 72;
+            --translation: 150;
+        }
+
+        .spinner div:nth-child(3) {
+            --delay: 0.3;
+            --rotation: 108;
+            --translation: 150;
+        }
+
+        .spinner div:nth-child(4) {
+            --delay: 0.4;
+            --rotation: 144;
+            --translation: 150;
+        }
+
+        .spinner div:nth-child(5) {
+            --delay: 0.5;
+            --rotation: 180;
+            --translation: 150;
+        }
+
+        .spinner div:nth-child(6) {
+            --delay: 0.6;
+            --rotation: 216;
+            --translation: 150;
+        }
+
+        .spinner div:nth-child(7) {
+            --delay: 0.7;
+            --rotation: 252;
+            --translation: 150;
+        }
+
+        .spinner div:nth-child(8) {
+            --delay: 0.8;
+            --rotation: 288;
+            --translation: 150;
+        }
+
+        .spinner div:nth-child(9) {
+            --delay: 0.9;
+            --rotation: 324;
+            --translation: 150;
+        }
+
+        .spinner div:nth-child(10) {
+            --delay: 1;
+            --rotation: 360;
+            --translation: 150;
+        }
+
+        @keyframes spinner-fzua35 {
+            0%, 10%, 20%, 30%, 50%, 60%, 70%, 80%, 90%, 100% {
+                transform: rotate(calc(var(--rotation) * 1deg)) translate(0, calc(var(--translation) * 1%));
+            }
+
+            50% {
+                transform: rotate(calc(var(--rotation) * 1deg)) translate(0, calc(var(--translation) * 1.5%));
+            }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>DeepSeek AI Chat</h1>
     <label for="user-input"></label><input type="text" id="user-input" placeholder="Type your prompt...">
-    <button onclick="sendMessageToOllama()">Send</button>
+    <div style="display: flex; align-items: center; flex-wrap: wrap; flex-direction: row;">
+        <button onclick="sendMessageToOllama()">Send</button>
+        <div id="loadingSpinner" class="spinner hidden" style="margin-left: 90px;">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+
     <div id="response" style="display: block"></div>
     <script defer>
         async function sendMessageToOllama() {
             const userInput = document.getElementById('user-input');
             const responseDiv = document.getElementById('response');
-            console.log("in", userInput.value)
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            loadingSpinner.classList.remove('hidden');
+
+            console.log("Prompt", userInput.value)
             const message = {
                 method: 'POST',
                 headers: {
@@ -75,8 +183,9 @@
                 },
                 body: JSON.stringify({
                     //model: 'deepseek-r1:32b', // Replace with your model name if needed
-                    //model: 'deepseek-coder:6.7b',
                     model: 'deepseek-r1:14b',
+                    //model: 'deepseek-coder:6.7b',
+                    //model: 'deepseek-coder:33b',
                     prompt: userInput.value,
                 }),
             };
@@ -128,10 +237,12 @@
                     }
                 }
                 responseDiv.innerHTML = marked.parse(responseDiv.innerText)
+                loadingSpinner.classList.add('hidden');
             } catch (error) {
                 console.error('Error sending message to Ollama:', error);
                 // Handle error, e.g., display an error message to the user
                 responseDiv.innerText = "Error communicating with Ollama. Check the console for details.";
+                loadingSpinner.classList.add('hidden');
             }
         }
 
