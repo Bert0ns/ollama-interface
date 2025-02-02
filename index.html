@@ -74,12 +74,16 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    model: 'deepseek-r1:32b', // Replace with your model name if needed
+                    //model: 'deepseek-r1:32b', // Replace with your model name if needed
+                    //model: 'deepseek-coder:6.7b',
+                    model: 'deepseek-r1:14b',
                     prompt: userInput.value,
                 }),
             };
 
             try {
+                responseDiv.innerHTML = "";
+
                 const response = await fetch('http://localhost:11434/api/generate', message); // Ollama's default port
 
                 if (!response.ok) {
